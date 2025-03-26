@@ -1,7 +1,7 @@
-# Intelligent Video Surveillance System
+# Intelligent Voice Assistant
 
 ## Overview
-The **Intelligent Video Surveillance System** is an AI-powered security and monitoring system that integrates **voice commands, a graphical user interface (GUI), face recognition, and gesture control** for real-time surveillance. This system enhances security by allowing users to interact through multiple input methods, ensuring a seamless and efficient monitoring experience.
+The **Intelligent Voice Assistant** is an AI-powered system that integrates **voice commands, a graphical user interface (GUI), and gesture control** for seamless interaction. This system enhances user experience by allowing multiple input methods for better accessibility and efficiency.
 
 ## Features
 ### Phase 1: Basic Voice Assistant
@@ -11,7 +11,7 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
 
 ### Phase 2: GUI Development
 - Built with **Tkinter** or **PyQt** for a user-friendly interface.
-- Includes **buttons, labels, and controls** for managing the surveillance system.
+- Includes **buttons, labels, and controls** for managing the assistant.
 - Integrates voice assistant controls into the GUI for improved usability.
 
 ### Phase 3: Face Recognition System
@@ -21,7 +21,7 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
 
 ### Phase 4: Gesture Control Integration
 - Uses **OpenCV** and **MediaPipe** for **hand tracking** and **gesture recognition**.
-- Defines **specific gestures** for actions like **starting/stopping monitoring, switching cameras**, etc.
+- Defines **specific gestures** for actions like **activating the assistant, controlling applications, etc.**.
 - Integrates gesture controls with the **GUI and voice assistant** for a unified control system.
 
 ### Phase 5: System Integration and Testing
@@ -42,12 +42,13 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
   - `Tkinter` / `PyQt` - for GUI development
   - `OpenCV` - for video processing and face recognition
   - `MediaPipe` - for gesture recognition
+  - `NumPy`, `Pandas` - for data handling and processing
 
 ## Installation & Setup
 1. Clone the repository:
    ```bash
-   git clone https://github.com/your-username/intelligent-video-surveillance.git
-   cd intelligent-video-surveillance
+   git clone https://github.com/your-username/intelligent-voice-assistant.git
+   cd intelligent-voice-assistant
    ```
 2. Install dependencies:
    ```bash
@@ -59,7 +60,7 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
    ```
 
 ## Usage
-- **Voice Commands:** Activate and control the surveillance system via speech.
+- **Voice Commands:** Activate and control the assistant via speech.
 - **GUI Controls:** Use buttons and toggles for manual control.
 - **Face Recognition:** Detect and identify authorized/unrecognized individuals.
 - **Gesture Control:** Perform system actions with predefined hand gestures.
@@ -67,8 +68,8 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
 ## Future Enhancements
 - Implement **real-time alerts and notifications**.
 - Add **cloud storage and remote access**.
-- Enhance **AI-based anomaly detection**.
-
+- Enhance **AI-based automation and integrations**.
+  
 ## Contributors
 - [Paras Mehta](https://github.com/Paras-Mehta007)
 - [Himadri Mehra]
