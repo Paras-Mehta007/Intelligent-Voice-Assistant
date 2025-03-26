@@ -42,7 +42,7 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
   - `Tkinter` / `PyQt` - for GUI development
   - `OpenCV` - for video processing and face recognition
   - `MediaPipe` - for gesture recognition
-  - `NumPy`, `Pandas` - for data handling and processing
+
 
 ## Installation & Setup
 1. Clone the repository:
