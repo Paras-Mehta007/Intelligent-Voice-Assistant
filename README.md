@@ -42,7 +42,6 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
   - `Tkinter` / `PyQt` - for GUI development
   - `OpenCV` - for video processing and face recognition
   - `MediaPipe` - for gesture recognition
-  - `NumPy`, `Pandas` - for data handling and processing
 
 ## Installation & Setup
 1. Clone the repository:
@@ -71,8 +70,10 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
 - Enhance **AI-based anomaly detection**.
 
 ## Contributors
-- [Your Name](https://github.com/your-username)  
-- [Other Team Members]
+- [Paras Mehta](https://github.com/Paras-Mehta007))  
+- [Himadri Mehra]
+- [Kritika Tewari]
+- [Divyanshu Singh Parihar]
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
