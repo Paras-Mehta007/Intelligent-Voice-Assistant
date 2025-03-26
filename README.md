@@ -70,7 +70,7 @@ The **Intelligent Video Surveillance System** is an AI-powered security and moni
 - Enhance **AI-based anomaly detection**.
 
 ## Contributors
-- [Paras Mehta](https://github.com/Paras-Mehta007))  
+- [Paras Mehta](https://github.com/Paras-Mehta007)
 - [Himadri Mehra]
 - [Kritika Tewari]
 - [Divyanshu Singh Parihar]
