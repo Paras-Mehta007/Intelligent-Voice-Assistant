@@ -11,6 +11,8 @@ import numpy as np
 import io
 import requests
 
+
+
 # Import the VoiceAssistant class from your existing file
 from quickstart import VoiceAssistant
 
