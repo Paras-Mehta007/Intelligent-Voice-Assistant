@@ -65,7 +65,6 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
 - **Voice Commands:** Activate and control the assistant via speech.
 - **GUI Controls:** Use buttons and toggles for manual control.
 - **Face Recognition:** Detect and identify authorized/unrecognized individuals.
-- **Gesture Control:** Perform system actions with predefined hand gestures.
 
 ## Future Enhancements
 - Implement **real-time alerts and notifications**.
