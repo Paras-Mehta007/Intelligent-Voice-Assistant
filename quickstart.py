@@ -10,12 +10,13 @@ from gtts import gTTS
 import playsound
 import re
 
-# Google Calendar API imports
+# Google Calendar API   imports
 from google.auth.transport.requests import Request
 from google.oauth2.credentials import Credentials
 from google_auth_oauthlib.flow import InstalledAppFlow
 from googleapiclient.discovery import build
 from googleapiclient.errors import HttpError
+
 
 # Google Calendar API scope
 SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
@@ -28,6 +29,8 @@ class VoiceAssistant:
         self.calendar_creds = None
         self._init_calendar()
         self.speak(f"Hello, I am {self.name}. How can I help you?")
+
+
     
     def _init_calendar(self):
         if os.path.exists("token.json"):
@@ -56,6 +59,10 @@ class VoiceAssistant:
             print("Sorry, I couldn't understand that.")
             return ""
     
+
+
+
+
     def speak(self, text):
         print(f"{self.name}: {text}")
         tts = gTTS(text=text, lang='en')
@@ -131,6 +138,9 @@ class VoiceAssistant:
             command = self.listen()
             response = self.process_command(command)
             self.speak(response)
+
+
+
 
 if __name__ == "__main__":
     assistant = VoiceAssistant("Assistant")
