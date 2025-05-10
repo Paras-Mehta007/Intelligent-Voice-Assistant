@@ -4,6 +4,7 @@ import os
 import pickle
 import time
 from datetime import datetime
+import matplotlib as plt
 
 class FaceRecognition:
     def __init__(self, data_dir="face_data"):
