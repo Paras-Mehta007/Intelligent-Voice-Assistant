@@ -51,7 +51,7 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
    ```bash
    git clone https://github.com/your-username/intelligent-voice-assistant.git
    cd intelligent-voice-assistant
-
+   
 2. Install dependencies:
    ```bash
    pip install -r requirements.txt
@@ -66,6 +66,7 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
 - **GUI Controls:** Use buttons and toggles for manual control.
 - **Face Recognition:** Detect and identify authorized/unrecognized individuals.
 
+
 ## Future Enhancements
 - Implement **real-time alerts and notifications**.
 - Add **cloud storage and remote access**.
@@ -73,9 +74,9 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
   
 ## Contributors
 - [Paras Mehta](https://github.com/Paras-Mehta007)
-- [Himadri Mehra]
-- [Kritika Tewari]
-- [Divyanshu Singh Parihar]
+- [Himadri Mehra](https://github.com/Himadrimehra)
+- [Kritika Tewari](https://github.com/kritikatewari981)
+- [Divyanshu Singh Parihar](https://github.com/divy000)
 
 ## License
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
