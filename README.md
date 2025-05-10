@@ -42,6 +42,8 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
   - `gTTS` – for text-to-speech conversion
   - `Tkinter` / `PyQt` – for GUI development
   - `OpenCV` – for video processing and face recognition
+  - `NumPy` – for numerical operations in face recognition
+    
 
 ## Installation & Setup
 
@@ -49,3 +51,35 @@ The **Intelligent Voice Assistant** is an AI-powered system that integrates **vo
    ```bash
    git clone https://github.com/your-username/intelligent-voice-assistant.git
    cd intelligent-voice-assistant
+
+2. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+3. Run the application:
+   ```bash
+   python main.py
+   ```
+
+## Usage
+- **Voice Commands:** Activate and control the assistant via speech.
+- **GUI Controls:** Use buttons and toggles for manual control.
+- **Face Recognition:** Detect and identify authorized/unrecognized individuals.
+- **Gesture Control:** Perform system actions with predefined hand gestures.
+
+## Future Enhancements
+- Implement **real-time alerts and notifications**.
+- Add **cloud storage and remote access**.
+- Enhance **AI-based automation and integrations**.
+  
+## Contributors
+- [Paras Mehta](https://github.com/Paras-Mehta007)
+- [Himadri Mehra]
+- [Kritika Tewari]
+- [Divyanshu Singh Parihar]
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+## Acknowledgments
+Special thanks to all contributors and the open-source community for providing useful resources and libraries.
