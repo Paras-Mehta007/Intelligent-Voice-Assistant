@@ -43,6 +43,7 @@ class FaceRecognition:
     def register_new_user(self, user_name, capture_count=30):
         """Register a new user by capturing face images"""
         user_id = len(self.face_data) + 1
+        # user_id = max(self.face_data.keys(), default=0) + 1
         user_dir = os.path.join(self.users_dir, str(user_id))
         os.makedirs(user_dir, exist_ok=True)
 
@@ -102,30 +103,46 @@ class FaceRecognition:
             self.recognizer.save(os.path.join(self.data_dir, "face_model.yml"))
             print("Model trained and saved with all users.")
 
-    def recognize_face(self, frame):
+    def recognize_face(self, frame,confidence_threshold=60):
         """Recognize face in the given frame"""
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         faces = self.face_cascade.detectMultiScale(gray, 1.3, 5)
 
         results = []
+        MIN_CONFIDENCE = confidence_threshold  # Lower is better in OpenCV LBPH
+
+
         for (x, y, w, h) in faces:
             face = gray[y:y+h, x:x+w]
             face = cv2.resize(face, (200, 200))
 
             try:
                 label, confidence = self.recognizer.predict(face)
-                if confidence < 100 and label in self.face_data:
+                print(f"Predicted: {label}, Confidence: {confidence:.2f}")
+
+                if confidence < MIN_CONFIDENCE and label in self.face_data:
                     name = self.face_data[label]['name']
                     results.append({
                         'name': name,
                         'confidence': confidence,
-                        'bbox': (x, y, w, h)
+                        'bbox': (x, y, w, h),
+                        'valid':True
+                    })
+                else:
+                    results.append({
+                        'name': "Unknown",
+                        'confidence': confidence,
+                        'bbox': (x, y, w, h),
+                        'valid':False
                     })
             except Exception as e:
-                print(f"Error during recognition: {e}")
+                print(f"Recognition error: {e}")
 
+        
+ 
         return results
 
+   
     def start_recognition(self):
         """Start continuous face recognition"""
         cap = cv2.VideoCapture(0)
@@ -136,16 +153,33 @@ class FaceRecognition:
                 continue
 
             results = self.recognize_face(frame)
-
-            for result in results:
-                x, y, w, h = result['bbox']
-                name = result['name']
-                confidence = result['confidence']
-
-                cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
-                text = f"{name} ({confidence:.2f}%)"
-                cv2.putText(frame, text, (x, y-10),
-                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (255, 0, 0), 2)
+            
+            # First check if any faces were detected
+            if not results:
+                # No faces detected in frame
+                cv2.putText(frame, "No face detected", (30, 30),
+                            cv2.FONT_HERSHEY_SIMPLEX, 0.9, (0, 0, 255), 2)
+            else:
+                # Process each detected face
+                for result in results:
+                    x, y, w, h = result['bbox']
+                    name = result['name']
+                    confidence = result['confidence']
+                    is_valid = result['valid']
+                    
+                    cv2.rectangle(frame, (x, y), (x+w, y+h), (255, 0, 0), 2)
+                    
+                    if is_valid:
+                        text = f"{name} ({confidence:.2f})"
+                        color = (0, 255, 0)  # Green
+                        # 🚀 Launch assistant here ONLY
+                        # start_voice_assistant()
+                    else:
+                        text = "Unknown. Please register."
+                        color = (0, 0, 255)  # Red
+                    
+                    cv2.putText(frame, text, (x, y-10),
+                                cv2.FONT_HERSHEY_SIMPLEX, 0.9, color, 2)
 
             cv2.imshow('Face Recognition', frame)
 
