@@ -22,13 +22,14 @@ import wolframalpha
 from newsapi import NewsApiClient
 import socket
 from geopy.geocoders import Nominatim
-# from timezonefinder import TimezoneFinder
+from timezonefinder import TimezoneFinder
 import pytz
 import yfinance as yf
 import threading
 from pytube import YouTube
 import speedtest
 import cv2
+from datetime import datetime, timedelta
 
 # Import Google Calendar functionality
 from google.auth.transport.requests import Request
@@ -58,12 +59,9 @@ class VoiceAssistant:
         
         # Initialize APIs
         self.news_api = None
-        if self.news_api_key != "YOUR_NEWS_API_KEY":
-            self.news_api = NewsApiClient(api_key=self.news_api_key)
         
-        self.wolfram_client = None
-        if self.wolfram_app_id != "YOUR_WOLFRAM_ALPHA_APP_ID":
-            self.wolfram_client = wolframalpha.Client(self.wolfram_app_id)
+        # Try to load API keys from config file
+        self.setup_api_keys()
         
         # Initialize Google Calendar credentials
         self.calendar_creds = None
@@ -87,6 +85,41 @@ class VoiceAssistant:
         
         # Greet the user
         self.speak(f"Hello, I am {self.name}, your voice assistant. How can I help you today?")
+    
+    def setup_api_keys(self):
+        """Set up API keys from environment variables or a config file"""
+        try:
+            # Try to load from config file first
+            config_path = os.path.join(os.path.dirname(__file__), "config.json")
+            if os.path.exists(config_path):
+                with open(config_path, 'r') as f:
+                    config = json.load(f)
+                    self.weather_api_key = config.get('weather_api_key', self.weather_api_key)
+                    self.news_api_key = config.get('news_api_key', self.news_api_key)
+                    self.wolfram_app_id = config.get('wolfram_app_id', self.wolfram_app_id)
+                    
+                    # Initialize APIs with the loaded keys
+                    if self.news_api_key != "YOUR_NEWS_API_KEY":
+                        self.news_api = NewsApiClient(api_key=self.news_api_key)
+                    
+                    if self.wolfram_app_id != "YOUR_WOLFRAM_ALPHA_APP_ID":
+                        self.wolfram_client = wolframalpha.Client(self.wolfram_app_id)
+                    
+                    return "API keys loaded from config file."
+            else:
+                # Create a template config file
+                template_config = {
+                    "weather_api_key": "YOUR_OPENWEATHERMAP_API_KEY",
+                    "news_api_key": "YOUR_NEWS_API_KEY",
+                    "wolfram_app_id": "YOUR_WOLFRAM_ALPHA_APP_ID"
+                }
+                with open(config_path, 'w') as f:
+                    json.dump(template_config, f, indent=4)
+                
+                return "Created a template config file. Please fill in your API keys."
+        
+        except Exception as e:
+            return f"Error setting up API keys: {str(e)}"
     
     def initialize_calendar_creds(self):
         """Initialize Google Calendar credentials"""
@@ -148,12 +181,12 @@ class VoiceAssistant:
     
     def get_time(self):
         """Get current time"""
-        current_time = datetime.datetime.now().strftime("%I:%M %p")
+        current_time = datetime.now().strftime("%I:%M %p")
         return f"The current time is {current_time}"
     
     def get_date(self):
         """Get current date"""
-        current_date = datetime.datetime.now().strftime("%A, %B %d, %Y")
+        current_date = datetime.now().strftime("%A, %B %d, %Y")
         return f"Today is {current_date}"
     
     def open_application(self, app_name):
@@ -197,15 +230,42 @@ class VoiceAssistant:
         webbrowser.open(url)
         return f"Here are the search results for {query}"
     
+    def get_weather_without_api(self, city):
+        """Get weather information without using an API (fallback method)"""
+        try:
+            # Use a free weather service that doesn't require API keys
+            url = f"https://wttr.in/{city}?format=j1"
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Extract weather information
+                current = data['current_condition'][0]
+                weather_desc = current['weatherDesc'][0]['value']
+                temp_c = current['temp_C']
+                feels_like = current['FeelsLikeC']
+                humidity = current['humidity']
+                wind_speed = current['windspeedKmph']
+                
+                return (f"Weather in {city}: {weather_desc}. "
+                       f"Temperature is {temp_c}°C, feels like {feels_like}°C. "
+                       f"Humidity is {humidity}% and wind speed is {wind_speed} kilometers per hour.")
+            else:
+                return f"Sorry, I couldn't get weather information for {city}. Error code: {response.status_code}"
+        
+        except Exception as e:
+            return f"An error occurred while getting weather for {city}: {str(e)}"
+    
     def get_weather(self, city):
-        """Get weather information for a city using OpenWeatherMap API"""
+        """Get weather information for a city using OpenWeatherMap API or fallback"""
         if self.weather_api_key == "YOUR_OPENWEATHERMAP_API_KEY":
-            return "Weather functionality is not available. Please set up your OpenWeatherMap API key."
+            return self.get_weather_without_api(city)
         
         try:
             # Get coordinates for the city
-            geolocator = Nominatim(user_agent="geoapiExercises")
-            location = geolocator.geocode(city)
+            geolocator = Nominatim(user_agent="voice_assistant_app")
+            location = geolocator.geocode(city, timeout=10)
             
             if not location:
                 return f"Sorry, I couldn't find the location for {city}."
@@ -234,10 +294,12 @@ class VoiceAssistant:
                        f"Temperature is {temp}°C, feels like {feels_like}°C. "
                        f"Humidity is {humidity}% and wind speed is {wind_speed} meters per second.")
             else:
-                return f"Sorry, I couldn't get weather information for {city}. Error code: {response.status_code}"
+                # Fallback to alternative method if API fails
+                return self.get_weather_without_api(city)
         
         except Exception as e:
-            return f"An error occurred while getting weather for {city}: {str(e)}"
+            # Fallback to alternative method if there's an error
+            return self.get_weather_without_api(city)
     
     def get_calendar_events(self, max_results=5):
         """Get upcoming calendar events"""
@@ -314,7 +376,7 @@ class VoiceAssistant:
         """Set a reminder for a specific time"""
         try:
             # Parse the time string to get a datetime object
-            current_date = datetime.datetime.now().date()
+            current_date = datetime.now().date()
             
             # Handle "in X minutes/hours" format
             in_time_match = re.search(r'in (\d+) (minute|minutes|hour|hours)', time_str)
@@ -322,7 +384,7 @@ class VoiceAssistant:
                 amount = int(in_time_match.group(1))
                 unit = in_time_match.group(2)
                 
-                reminder_time = datetime.datetime.now()
+                reminder_time = datetime.now()
                 if 'minute' in unit:
                     reminder_time += datetime.timedelta(minutes=amount)
                 elif 'hour' in unit:
@@ -334,7 +396,7 @@ class VoiceAssistant:
                 
                 for fmt in time_formats:
                     try:
-                        parsed_time = datetime.datetime.strptime(time_str, fmt).time()
+                        parsed_time = datetime.strptime(time_str, fmt).time()
                         break
                     except ValueError:
                         continue
@@ -342,10 +404,10 @@ class VoiceAssistant:
                 if not parsed_time:
                     return "I couldn't understand the time format. Please try again with a format like '3:30 PM' or 'in 30 minutes'."
                 
-                reminder_time = datetime.datetime.combine(current_date, parsed_time)
+                reminder_time = datetime.combine(current_date, parsed_time)
                 
                 # If the time is in the past, assume it's for tomorrow
-                if reminder_time < datetime.datetime.now():
+                if reminder_time < datetime.now():
                     reminder_time += datetime.timedelta(days=1)
             
             # Add the reminder to the list
@@ -366,7 +428,7 @@ class VoiceAssistant:
     def check_reminders(self):
         """Check for due reminders and announce them"""
         while self.is_active:
-            current_time = datetime.datetime.now()
+            current_time = datetime.now()
             due_reminders = []
             
             # Check for due reminders
@@ -388,10 +450,41 @@ class VoiceAssistant:
         self.reminder_thread.daemon = True
         self.reminder_thread.start()
     
+    def get_news_without_api(self, category="general", count=3):
+        """Get the latest news headlines without using an API"""
+        try:
+            # Use a free news source that doesn't require API keys
+            url = "https://news.google.com/rss"
+            response = requests.get(url)
+            
+            if response.status_code == 200:
+                # Parse the RSS feed
+                from xml.etree import ElementTree as ET
+                root = ET.fromstring(response.content)
+                
+                # Extract news items
+                items = root.findall(".//item")
+                
+                if items:
+                    response = f"Here are the top {min(count, len(items))} news headlines: "
+                    
+                    for i, item in enumerate(items[:count]):
+                        title = item.find("title").text
+                        response += f"{i+1}. {title}. "
+                    
+                    return response
+                else:
+                    return "Sorry, I couldn't find any news headlines."
+            else:
+                return f"Sorry, I couldn't get news headlines. Error code: {response.status_code}"
+        
+        except Exception as e:
+            return f"An error occurred while getting news: {str(e)}"
+    
     def get_news(self, category="general", count=3):
-        """Get the latest news headlines"""
+        """Get the latest news headlines with fallback"""
         if not self.news_api:
-            return "News functionality is not available. Please set up your News API key."
+            return self.get_news_without_api(category, count)
         
         try:
             news = self.news_api.get_top_headlines(category=category, language='en', country='us')
@@ -404,10 +497,12 @@ class VoiceAssistant:
                 
                 return response
             else:
-                return f"Sorry, I couldn't find any {category} news headlines."
+                # Fallback to alternative method if no results
+                return self.get_news_without_api(category, count)
         
         except Exception as e:
-            return f"An error occurred while getting news: {str(e)}"
+            # Fallback to alternative method if there's an error
+            return self.get_news_without_api(category, count)
     
     def get_wikipedia_info(self, query):
         """Get information from Wikipedia"""
@@ -498,60 +593,79 @@ class VoiceAssistant:
         """Translate text to another language (requires an API key)"""
         # This is a placeholder - you would need to implement a translation API
         return f"Translation functionality is not implemented yet."
+
     
-    def get_stock_price(self, symbol):
-        """Get stock price information"""
+    def get_time_in_city_without_api(self, city):
+        """Get the current time in a specific city without using external APIs"""
         try:
-            stock = yf.Ticker(symbol)
-            info = stock.info
+            # Dictionary of major cities and their UTC offsets
+            city_offsets = {
+                "new york": -5, "los angeles": -8, "chicago": -6, "houston": -6, "phoenix": -7,
+                "philadelphia": -5, "san antonio": -6, "san diego": -8, "dallas": -6, "san jose": -8,
+                "london": 0, "paris": 1, "berlin": 1, "rome": 1, "madrid": 1,
+                "moscow": 3, "tokyo": 9, "beijing": 8, "dubai": 4, "sydney": 11,
+                "mumbai": 5.5, "delhi": 5.5, "singapore": 8, "hong kong": 8, "toronto": -5,
+                "mexico city": -6, "rio de janeiro": -3, "sao paulo": -3, "buenos aires": -3,
+                "johannesburg": 2, "cairo": 2, "istanbul": 3, "seoul": 9, "bangkok": 7,
+                "kuala lumpur": 8, "jakarta": 7, "auckland": 13, "wellington": 13,
+                "vancouver": -8, "montreal": -5, "amsterdam": 1, "vienna": 1, "brussels": 1,
+                "zurich": 1, "stockholm": 1, "oslo": 1, "copenhagen": 1, "helsinki": 2,
+                "athens": 2, "warsaw": 1, "budapest": 1, "prague": 1, "dublin": 0,
+                "lisbon": 0, "manila": 8, "taipei": 8, "hanoi": 7, "baghdad": 3,
+                "tehran": 3.5, "riyadh": 3, "doha": 3, "abu dhabi": 4, "muscat": 4,
+                "nairobi": 3, "lagos": 1, "casablanca": 0, "accra": 0, "addis ababa": 3
+            }
             
-            if 'regularMarketPrice' in info:
-                price = info['regularMarketPrice']
-                company_name = info.get('shortName', symbol)
-                previous_close = info.get('regularMarketPreviousClose', None)
+            # Normalize city name
+            city_lower = city.lower()
+            
+            # Check if city is in our dictionary
+            if city_lower in city_offsets:
+                # Get UTC offset for the city
+                offset = city_offsets[city_lower]
                 
-                response = f"The current price of {company_name} ({symbol}) is ${price:.2f}."
+                # Calculate current time in that city
+                utc_now = datetime.utcnow()
+                city_time = utc_now + timedelta(hours=offset)
                 
-                if previous_close:
-                    change = price - previous_close
-                    percent_change = (change / previous_close) * 100
-                    direction = "up" if change > 0 else "down"
-                    response += f" That's {direction} ${abs(change):.2f} or {abs(percent_change):.2f}% from yesterday's close."
+                # Format the time
+                formatted_time = city_time.strftime("%I:%M %p on %A, %B %d")
                 
-                return response
+                return f"It's currently {formatted_time} in {city}."
             else:
-                return f"Sorry, I couldn't find stock information for {symbol}."
+                # Try to use the geopy and timezonefinder method as fallback
+                return self.get_time_in_city_with_geopy(city)
         
         except Exception as e:
-            return f"An error occurred while getting stock information: {str(e)}"
+            return f"An error occurred while getting time for {city}: {str(e)}"
     
-    # def get_time_in_city(self, city):
-    #     """Get the current time in a specific city"""
-    #     try:
-    #         # Get location coordinates
-    #         geolocator = Nominatim(user_agent="geoapiExercises")
-    #         location = geolocator.geocode(city)
+    def get_time_in_city_with_geopy(self, city):
+        """Get the current time in a specific city using geopy and timezonefinder"""
+        try:
+            # Get location coordinates
+            geolocator = Nominatim(user_agent="voice_assistant_app")
+            location = geolocator.geocode(city, timeout=10)
             
-    #         if not location:
-    #             return f"Sorry, I couldn't find the location for {city}."
+            if not location:
+                return f"Sorry, I couldn't find the location for {city}."
             
-    #         # Get timezone from coordinates
-    #         tf = TimezoneFinder()
-    #         timezone_str = tf.timezone_at(lng=location.longitude, lat=location.latitude)
+            # Get timezone from coordinates
+            tf = TimezoneFinder()
+            timezone_str = tf.timezone_at(lng=location.longitude, lat=location.latitude)
             
-    #         if not timezone_str:
-    #             return f"Sorry, I couldn't determine the timezone for {city}."
+            if not timezone_str:
+                return f"Sorry, I couldn't determine the timezone for {city}."
             
-    #         # Get current time in that timezone
-    #         timezone = pytz.timezone(timezone_str)
-    #         city_time = datetime.datetime.now(timezone)
-    #         formatted_time = city_time.strftime("%I:%M %p on %A, %B %d")
+            # Get current time in that timezone
+            timezone = pytz.timezone(timezone_str)
+            city_time = datetime.now(timezone)
+            formatted_time = city_time.strftime("%I:%M %p on %A, %B %d")
             
-    #         return f"It's currently {formatted_time} in {city}."
+            return f"It's currently {formatted_time} in {city}."
         
-    #     except Exception as e:
-    #         return f"An error occurred while getting time for {city}: {str(e)}"
-    
+        except Exception as e:
+            return f"An error occurred while getting time for {city}: {str(e)}"
+     
     def answer_question(self, question):
         """Answer general knowledge questions using Wolfram Alpha"""
         if not self.wolfram_client:
@@ -580,33 +694,6 @@ class VoiceAssistant:
         except Exception as e:
             # If Wolfram Alpha fails, try a general response
             return f"I'm not sure about that. Error: {str(e)}"
-    
-    def download_youtube_audio(self, url):
-        """Download audio from a YouTube video"""
-        try:
-            # Create output directory if it doesn't exist
-            output_dir = os.path.join(os.path.expanduser("~"), "Downloads", "Assistant_Downloads")
-            os.makedirs(output_dir, exist_ok=True)
-            
-            # Get YouTube video
-            yt = YouTube(url)
-            audio_stream = yt.streams.filter(only_audio=True).first()
-            
-            if not audio_stream:
-                return "Sorry, I couldn't find an audio stream for this video."
-            
-            # Download the audio
-            output_file = audio_stream.download(output_path=output_dir)
-            
-            # Rename to MP3
-            base, ext = os.path.splitext(output_file)
-            new_file = base + '.mp3'
-            os.rename(output_file, new_file)
-            
-            return f"Audio downloaded from '{yt.title}' and saved to {new_file}"
-        
-        except Exception as e:
-            return f"Failed to download YouTube audio: {str(e)}"
     
     def check_internet_speed(self):
         """Check internet connection speed"""
@@ -840,14 +927,6 @@ class VoiceAssistant:
             else:
                 return "Please specify what to translate and to which language."
         
-        # Stock price
-        elif "stock" in command or "price of" in command:
-            stock_match = re.search(r'(?:stock|price of)\s+(\w+)', command)
-            if stock_match:
-                symbol = stock_match.group(1).strip().upper()
-                return self.get_stock_price(symbol)
-            else:
-                return "Which stock would you like information about?"
         
         # Time in city
         elif "time in" in command:
@@ -862,14 +941,6 @@ class VoiceAssistant:
         elif any(q in command for q in ["what is", "who is", "when did", "where is", "why does", "how many", "calculate"]):
             return self.answer_question(command)
         
-        # Download YouTube audio
-        elif "download" in command and ("youtube" in command or "video" in command):
-            self.speak("Please say or paste the YouTube URL.")
-            url = self.listen()
-            if "youtube.com" in url or "youtu.be" in url:
-                return self.download_youtube_audio(url)
-            else:
-                return "That doesn't appear to be a valid YouTube URL."
         
         # Internet speed test
         elif "internet speed" in command or "speed test" in command:
@@ -905,12 +976,60 @@ class VoiceAssistant:
             return "I'm not sure how to help with that yet. Try asking for help to see what I can do."
         
     def run(self):
-        """Main loop for the voice assistant"""
-        while True:
-            command = self.listen()
-            response = self.process_command(command)
-            self.speak(response)
+        """Main loop for the voice assistant with improved error handling"""
+        try:
+            self.speak("I'm ready to assist you. Say 'help' for a list of commands.")
+            
+            while self.is_active:
+                try:
+                    command = self.listen()
+                    
+                    if not command:
+                        continue
+                    
+                    # Process the command
+                    response = self.process_command(command)
+                    
+                    # Speak the response
+                    self.speak(response)
+                    
+                except Exception as e:
+                    print(f"Error processing command: {str(e)}")
+                    self.speak("Sorry, I encountered an error processing your request. Please try again.")
+        
+        except KeyboardInterrupt:
+            self.speak("Assistant shutting down. Goodbye!")
+        except Exception as e:
+            print(f"Critical error: {str(e)}")
+            self.speak("A critical error occurred. The assistant needs to restart.")
+
+def create_config_file():
+    """Create a template configuration file for API keys"""
+    config_path = os.path.join(os.path.dirname(__file__), "config.json")
+    
+    # Check if file already exists
+    if os.path.exists(config_path):
+        print("Config file already exists.")
+        return
+    
+    # Create template config
+    template_config = {
+        "weather_api_key": "YOUR_OPENWEATHERMAP_API_KEY",
+        "news_api_key": "YOUR_NEWS_API_KEY",
+        "wolfram_app_id": "YOUR_WOLFRAM_ALPHA_APP_ID"
+    }
+    
+    # Write to file
+    with open(config_path, 'w') as f:
+        json.dump(template_config, f, indent=4)
+    
+    print(f"Created template config file at {config_path}")
+    print("Please edit this file to add your API keys.")
 
 if __name__ == "__main__":
+    # Create config file if it doesn't exist
+    create_config_file()
+    
+    # Start the assistant
     assistant = VoiceAssistant("Assistant")  # You can change the name
     assistant.run()
