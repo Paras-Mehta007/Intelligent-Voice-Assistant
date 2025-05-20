@@ -3,7 +3,7 @@ import cv2
 import threading
 import time
 import os
-import datetime
+import datetime 
 from tkinter import messagebox, ttk
 from PIL import Image, ImageTk
 
@@ -130,7 +130,7 @@ class AuthenticationApp:
             font=("Helvetica", 12),
             bg=self.panel_color,
             fg=self.text_color,
-            padx=10,
+            padx=10, 
             pady=5,
             command=self.skip_authentication
         )
@@ -198,6 +198,7 @@ class AuthenticationApp:
             
             time.sleep(0.03)  # ~30 FPS
     
+   
     def perform_recognition(self):
         """Perform face recognition on camera feed"""
         # Wait a moment for camera to initialize
@@ -208,7 +209,7 @@ class AuthenticationApp:
         
         # Authentication parameters
         max_attempts = 10  # Maximum number of recognition attempts
-        confidence_threshold = 70  # Confidence threshold for authentication (lower is better)
+        confidence_threshold = 60  # Confidence threshold for authentication (lower is better)
         attempt_count = 0
         
         while self.is_running and attempt_count < max_attempts:
@@ -222,18 +223,20 @@ class AuthenticationApp:
                 ret, frame = self.cap.read()
                 if ret:
                     # Perform face recognition
-                    results = self.face_system.recognize_face(frame)
+                    results = self.face_system.recognize_face(frame,confidence_threshold)
                     
                     # Check if any faces were detected
                     if not results:
                         # No faces detected
                         self.status_var.set(f"No face detected. Attempt {attempt_count}/{max_attempts}")
                     else:
-                        # Get the user with highest confidence (lowest value)
-                        best_match = min(results, key=lambda x: x['confidence'])
+                        # Process all detected faces
+                        valid_matches = [r for r in results if r['valid']]
                         
-                        # Check if confidence is below threshold (better match)
-                        if best_match['confidence'] < confidence_threshold:
+                        if valid_matches:
+                            # Get the user with highest confidence (lowest value) among valid matches
+                            best_match = min(valid_matches, key=lambda x: x['confidence'])
+                            
                             # Authentication successful
                             self.is_running = False
                             
@@ -268,8 +271,8 @@ class AuthenticationApp:
             
             # Show message box
             self.root.after(500, lambda: messagebox.showerror("Authentication Failed", 
-                                                             "Face not recognized. Please register or try again."))
-    
+                                                            "Face not recognized. Please register or try again."))
+
     def show_authentication_result(self, success, user_name=None):
         """Show a visual indication of authentication success/failure"""
         # Clear existing animation
