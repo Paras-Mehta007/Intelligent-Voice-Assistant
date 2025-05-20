@@ -12,7 +12,6 @@ import io
 import requests
 
 
-
 # Import the VoiceAssistant class from your existing file
 from quickstart import VoiceAssistant
 
@@ -66,6 +65,7 @@ class AssistantGUI:
                               font=("Helvetica", 24, "bold"), 
                               bg=self.bg_color, fg=self.accent_color)
         title_label.pack(pady=(0, 10))
+
         
         # Assistant visualization canvas
         self.canvas_frame = tk.Frame(top_frame, bg=self.bg_color)
